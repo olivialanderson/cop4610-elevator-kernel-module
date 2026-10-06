@@ -8,9 +8,9 @@ state through `/proc/elevator`. The repo also includes system-call tracing with 
 and a `my_timer` kernel module that exposes `/proc/timer` (Part 2).
 
 ## Group Members
-- **Gabriel Valladares-Ruiz**: [fsu email]
-- **Olivia Anderson**: [fsu email]
-- **Gannon Wooley**: [fsu email]
+- **Gabriel Valladares-Ruiz**
+- **Olivia Anderson**
+- **Gannon Wooley**
 
 ## Division of Labor
 
