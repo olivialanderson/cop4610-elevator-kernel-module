@@ -1,0 +1,12 @@
+# Compiled programs and kernel build output (rubric: no binaries)
+part1/empty
+part1/part1
+*.o
+*.ko
+*.mod
+*.mod.c
+*.cmd
+.*.cmd
+*.order
+*.symvers
+.tmp_versions/
