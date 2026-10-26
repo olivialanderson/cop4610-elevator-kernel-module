@@ -157,6 +157,10 @@ Each member records their contributions here.
 | Date       | Work Completed / Notes                                 |
 |------------|--------------------------------------------------------|
 | 2026-10-06 | Created GitHub repository and division of labor; README |
+| 2026-10-26 | Set up lab VM 427: SSH access, installed openssh-server; downloaded 6.16.12 |
+| 2026-10-26 | Added syscalls 548-550: syscalls/, syscall_64.tbl, syscalls.h, Makefile    |
+| 2026-10-26 | Configured kernel (localmodconfig, disabled cert keys); started build      |
+| 2026-10-26 | Completed Part 1: empty.c, part1.c, strace output, Makefile                |
 
 ### Gannon Wooley
 
@@ -175,4 +179,8 @@ Document in-person meetings, their purpose, and what was discussed.
 - None known yet.
 
 ## Considerations
-- [Add any design decisions or notes for the grader here.]
+- Kernel configured with `make localmodconfig` so only modules the VM uses are built.
+- Kernel build also needed `libdw-dev` (provides `dwarf.h`), which is not in the slide list.
+- The VM shipped with kernel 7.0.0; we built 6.16.x per the handout and boot it explicitly.
+- AI use: Claude (Anthropic) helped with setup steps, the syscall wrappers, and Part 1 code.
+  The team reviewed and tested all output; transcripts are saved.
