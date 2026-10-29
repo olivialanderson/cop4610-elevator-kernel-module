@@ -161,6 +161,9 @@ Each member records their contributions here.
 | 2026-10-26 | Added syscalls 548-550: syscalls/, syscall_64.tbl, syscalls.h, Makefile    |
 | 2026-10-26 | Configured kernel (localmodconfig, disabled cert keys); started build      |
 | 2026-10-26 | Completed Part 1: empty.c, part1.c, strace output, Makefile                |
+| 2026-10-29 | Installed 6.16.12 kernel; verified syscalls 548-550 with syscheck test |
+| 2026-10-29 | Completed Part 2: my_timer module with /proc/timer                     |
+| 2026-10-29 | Part 3 stage 1: pet lists, syscalls, /proc/elevator, kthread lifecycle |
 
 ### Gannon Wooley
 
