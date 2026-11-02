@@ -223,7 +223,8 @@ Each member records their contributions here.
 
 | Date       | Work Completed / Notes |
 |------------|------------------------|
-| YYYY-MM-DD | [Description of task]  |
+| 2026-10-29| Monitored `/proc/elevator` to validate floor movement, loading, passenger counts, and serviced requests.  |
+| 2026-11-02 | Independently tested elevator startup, passenger requests, floor movement, and unloading on VM 427. Verified that the serviced counter reached 15 and the elevator had zero passengers remaining after the stop request. Successfully executed module removal. |
 
 ### Olivia Anderson
 
