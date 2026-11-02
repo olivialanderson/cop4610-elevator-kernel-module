@@ -8,6 +8,7 @@ state through `/proc/elevator`. The repo also includes system-call tracing with 
 and a `my_timer` kernel module that exposes `/proc/timer` (Part 2).
 
 ## Group Members
+
 - **Gabriel Valladares-Ruiz**
 - **Olivia Anderson**
 - **Gannon Wooley**
@@ -56,7 +57,8 @@ and a `my_timer` kernel module that exposes `/proc/timer` (Part 2).
 - **Assigned to**: Gabriel Valladares-Ruiz, Gannon Wooley
 
 ## File Listing
-```
+
+```text
 cop4610-elevator-kernel-module/
 ├── part1/
 │   ├── empty.c
@@ -70,17 +72,25 @@ cop4610-elevator-kernel-module/
 │   └── Makefile
 ├── part3/
 │   ├── src/
-│   │   └── elevator.c
+│   │   ├── elevator.h
+│   │   ├── elevator_main.c
+│   │   ├── elevator_proc.c
+│   │   ├── elevator_thread.c
+│   │   └── pets.c
 │   ├── Makefile
 │   └── syscalls.c
 ├── division_of_labor.md
-├── Makefile
 └── README.md
 ```
 
-# How to Compile & Execute
+## How to Compile & Execute
+
+Run each compilation section from the repository root. On the shared VM, each member
+uses their own clone under `~/YOURNAME/cop4610-elevator-kernel-module`. The installed
+kernel and loaded modules are shared, so coordinate module testing with the group.
 
 ### Requirements
+
 - **Compiler**: `gcc`
 - **Kernel**: Linux 6.16.x, compiled with the system calls from Part 3
 - **Tools**: `make`, `strace`, kernel headers for the running kernel, `sudo` access
@@ -88,6 +98,7 @@ cop4610-elevator-kernel-module/
 ## Part 1
 
 ### Compilation
+
 ```bash
 cd part1
 make
@@ -95,15 +106,18 @@ make
 This builds the `empty` and `part1` executables.
 
 ### Execution
+
 ```bash
 strace -o empty.trace ./empty
 strace -o part1.trace ./part1
 ```
-`part1.trace` should show exactly five more system calls than `empty.trace`.
+The committed traces contain 30 system calls in `empty.trace` and 35 in `part1.trace`.
+The five extra calls are `getpid`, `getppid`, `getuid`, `getgid`, and `write`.
 
 ## Part 2
 
 ### Compilation
+
 ```bash
 cd part2
 make
@@ -111,6 +125,7 @@ make
 This builds the kernel module `my_timer.ko`.
 
 ### Execution
+
 ```bash
 sudo insmod my_timer.ko
 cat /proc/timer
@@ -124,26 +139,84 @@ read.
 ## Part 3
 
 ### Compilation
+
 ```bash
 cd part3
 make
 ```
-This builds the kernel module `elevator.ko`. The kernel must already be compiled and installed
-with the three elevator system calls.
+This builds the kernel module `elevator.ko`. The shared VM already runs Linux 6.16.12
+with syscalls 548-550 installed; rebuild the module after source changes. The
+`part3/syscalls.c` file is the kernel-side syscall source, not an object linked into
+`elevator.ko`. A separate machine needs the corresponding kernel integration and
+installation before it can use the module.
 
 ### Execution
+
+The following commands assume the provided producer and consumer are already built
+in `~/elevator-test` on the shared VM.
+
+From the clone's `part3` directory, load the module:
+
 ```bash
 sudo insmod elevator.ko
+cd ~/elevator-test
 ./consumer --start
-./producer [number_of_pets]
+./producer 20
 watch -n 1 cat /proc/elevator
+```
+
+Press **Ctrl+C** to leave `watch`; this does not stop the elevator. To test a graceful
+stop, issue the stop while riders are still aboard:
+
+```bash
 ./consumer --stop
+watch -n 1 cat /proc/elevator
+```
+
+Wait for `OFFLINE`, zero riders, and zero load, then press **Ctrl+C** and unload:
+
+```bash
 sudo rmmod elevator
 ```
+
+A stop prevents further boarding while the elevator delivers its current riders.
+Waiting pets may remain queued when it reaches `OFFLINE`. Before unloading, another
+`./consumer --start` starts at floor 1 and allows those waiting requests to be served.
+Module removal frees any remaining queued pets.
+
 `/proc/elevator` shows the elevator state, current floor, load, the pets on board, the pets
 waiting on each floor, and the number of pets serviced.
 
+### Scheduling
+
+- Unload pets at their destination before boarding from the current floor's queue.
+- Board from the head of each queue in FIFO order. If the next pet would exceed
+  5 riders or 50 lbs, leave it and the pets behind it queued.
+- Display `LOADING` and wait 1 second after a loading/unloading visit.
+- Keep the current direction while work remains ahead; reverse when needed.
+  Move one floor at a time with a 2-second delay, without wrapping between floors 5 and 1.
+- Use `IDLE` when active with no work. On stop, ignore waiting queues, drain riders,
+  then enter `OFFLINE`.
+- Hold `elevator_lock` for shared data access and release it before all thread delays.
+  Free each delivered pet and increment `total_serviced`.
+
+### Verification recorded
+
+- Gannon built and ran the scheduler on the shared Linux 6.16.12 VM with the provided
+  producer/consumer tools. A captured running state showed `UP` at floor 4, 4 riders,
+  exactly 50 lbs, and 16 pets serviced. Gannon also reported that the stop test completed
+  with an empty elevator in `OFFLINE`.
+- The scheduler was additionally checked with a userspace simulation using kernel API
+  shims: 12 targeted scenarios and 200 randomized runs covering 40,000 pets passed.
+  These assistant-run checks covered FIFO boarding, both capacity limits, floor bounds,
+  shared-data locking, idle/offline behavior, and stopping during loading and travel.
+  They do not replace kernel execution tests; the simulation harness is not included in
+  this repository.
+- A teammate's independent test of the pulled scheduler and the final combined demo
+  remain to be recorded.
+
 ## Development Log
+
 Each member records their contributions here.
 
 ### Gabriel Valladares-Ruiz
@@ -169,21 +242,42 @@ Each member records their contributions here.
 
 | Date       | Work Completed / Notes |
 |------------|------------------------|
-| YYYY-MM-DD | [Description of task]  |
+| 2026-10-29 | Implemented the Part 3 scheduler in `elevator_thread.c` with ChatGPT assistance: FIFO boarding, 5-pet/50-lb limits, unloading and memory cleanup, direction selection, delays outside the mutex, IDLE behavior, and graceful stop. |
+| 2026-10-29 | Built the module on the shared Linux 6.16.12 VM and tested with producer/consumer and `/proc/elevator`; observed movement and a 50-lb load, then confirmed the stop test worked. |
+| 2026-11-02 | Pushed the scheduler in commit [ea04bd2](https://github.com/olivialanderson/cop4610-elevator-kernel-module/commit/ea04bd270b4ede9618beb731e4519b28a0207535). |
+| 2026-11-02 | Updated the README with scheduler behavior, recorded tests, the current file listing, shared-VM run instructions, and assistance disclosure. |
 
 ## Meetings
+
 Document in-person meetings, their purpose, and what was discussed.
 
 | Date       | Attendees            | Topics Discussed | Outcomes / Decisions |
 |------------|----------------------|------------------|-----------------------|
 | YYYY-MM-DD | [Names]              | [Agenda items]   | [Actions/Next steps]  |
 
-## Bugs
-- None known yet.
+## Known Limitations
+
+- Both `/proc` read handlers currently return EOF after the first successful read on
+  an open file. Reads with small buffers can therefore truncate the displayed data.
+- Syscall callback removal is not synchronized with syscalls already in progress.
+  Concurrent module removal and producer/consumer calls can race. Stop request
+  generation and let active calls finish before unloading; callback lifetime
+  synchronization remains a code-review follow-up.
+- Kernel integration changes outside `part3/syscalls.c` (the syscall table, kernel
+  header declarations, and kernel Makefiles) are installed on the shared VM but are
+  not tracked in this repository.
 
 ## Considerations
+
 - Kernel configured with `make localmodconfig` so only modules the VM uses are built.
 - Kernel build also needed `libdw-dev` (provides `dwarf.h`), which is not in the slide list.
 - The VM shipped with kernel 7.0.0; we built 6.16.x per the handout and boot it explicitly.
+- Run `make clean` in the relevant part before staging changes; do not commit generated
+  modules, object files, or executables.
 - AI use: Claude (Anthropic) helped with setup steps, the syscall wrappers, and Part 1 code.
   The team reviewed and tested all output; transcripts are saved.
+- ChatGPT (OpenAI) assisted Gannon with the Part 3 scheduler implementation, setup and
+  Git troubleshooting, source review, userspace simulation checks, and these README
+  updates. Gannon copied the scheduler into his clone, built and ran it on the VM,
+  and pushed the code. The verification section distinguishes the VM observations
+  from assistant-run simulations.
