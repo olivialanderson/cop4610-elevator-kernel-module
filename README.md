@@ -248,14 +248,6 @@ Each member records their contributions here.
 | 2026-11-02 | Pushed the scheduler in commit [ea04bd2](https://github.com/olivialanderson/cop4610-elevator-kernel-module/commit/ea04bd270b4ede9618beb731e4519b28a0207535). |
 | 2026-11-02 | Updated the README with scheduler behavior, recorded tests, the current file listing, shared-VM run instructions, and assistance disclosure. |
 
-## Meetings
-
-Document in-person meetings, their purpose, and what was discussed.
-
-| Date       | Attendees            | Topics Discussed | Outcomes / Decisions |
-|------------|----------------------|------------------|-----------------------|
-| YYYY-MM-DD | [Names]              | [Agenda items]   | [Actions/Next steps]  |
-
 ## Known Limitations
 
 - Both `/proc` read handlers currently return EOF after the first successful read on
